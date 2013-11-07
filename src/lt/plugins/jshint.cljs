@@ -7,7 +7,7 @@
   (:require-macros [lt.macros :refer [defui background]]))
 
 (def errors (background (fn [obj-id code opts]
-                          (let [jshint (.-JSHINT (js/require (str js/ltpath "/core/node_modules/jshint")))]
+                          (let [jshint (.-JSHINT (js/require (str js/ltpath "/plugins/jshint/node_modules/jshint")))]
                             (jshint code (when opts (clj->js opts)))
                             (->> (js->clj (.-errors jshint) :keywordize-keys true)
                                  (raise obj-id :hinted))))))
