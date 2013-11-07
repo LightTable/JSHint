@@ -1,0 +1,2 @@
+{:+ {:app [(:lt.objs.plugins/load-js "jshint_compiled.js")]
+     :editor.javascript [:lt.plugins.jshint/inline-hints]}}
