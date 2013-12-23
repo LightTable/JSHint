@@ -4,7 +4,7 @@
             [lt.objs.editor :as editor]
             [lt.objs.editor.pool :as pool]
             [lt.objs.thread :as thread])
-  (:require-macros [lt.macros :refer [defui background]]))
+  (:require-macros [lt.macros :refer [behavior defui background]]))
 
 (def errors (background (fn [obj-id code opts]
                           (let [jshint (.-JSHINT (js/require (str js/ltpath "/plugins/jshint/node_modules/jshint")))]
@@ -24,7 +24,7 @@
     (-> (re-seq #"^\s+" text)
         (first))))
 
-(object/behavior* ::inline-hints
+(behavior ::inline-hints
                   :triggers #{:hinted}
                   :reaction (fn [this hints]
                               (editor/operation (editor/->cm-ed this)
@@ -37,7 +37,7 @@
                                                     ;;Ensure scroll position is the same as it was when we started
                                                     (.scrollTo (editor/->cm-ed this) (.-left prev) (.-top prev)))))))
 
-(object/behavior* ::on-change
+(behavior ::on-change
                   :debounce 750
                   :type :user
                   :desc "JSHint: Run JSHint on change"
@@ -45,14 +45,14 @@
                   :reaction (fn [this]
                               (errors this (editor/->val this) (::jshint-options @this))))
 
-(object/behavior* ::on-save
+(behavior ::on-save
                   :triggers #{:save}
                   :type :user
                   :desc "JSHint: Run JSHint on save"
                   :reaction (fn [this]
                               (errors this (editor/->val this) (::jshint-options @this))))
 
-(object/behavior* ::jshint-options
+(behavior ::jshint-options
                   :triggers #{:object.instant}
                   :type :user
                   :desc "JSHint: Set JSHint options"
