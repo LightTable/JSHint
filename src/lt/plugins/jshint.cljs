@@ -1,13 +1,17 @@
 (ns lt.plugins.jshint
   (:require [lt.object :as object]
+            [lt.objs.files :as files]
+            [lt.objs.plugins :as plugins]
             [lt.objs.command :as cmd]
             [lt.objs.editor :as editor]
             [lt.objs.editor.pool :as pool]
             [lt.objs.thread :as thread])
-  (:require-macros [lt.macros :refer [behavior defui background]]))
+  (:require-macros [lt.macros :refer [defui background]]))
 
-(def errors (background (fn [obj-id code opts]
-                          (let [jshint (.-JSHINT (js/require (str js/ltpath "/plugins/jshint/node_modules/jshint")))]
+(def jshint-path (files/join plugins/*plugin-dir* "node_modules/jshint"))
+
+(def errors (background (fn [obj-id jshint-path code opts]
+                          (let [jshint (.-JSHINT (js/require jshint-path))]
                             (jshint code (when opts (clj->js opts)))
                             (->> (js->clj (.-errors jshint) :keywordize-keys true)
                                  (raise obj-id :hinted))))))
@@ -24,7 +28,7 @@
     (-> (re-seq #"^\s+" text)
         (first))))
 
-(behavior ::inline-hints
+(object/behavior* ::inline-hints
                   :triggers #{:hinted}
                   :reaction (fn [this hints]
                               (editor/operation (editor/->cm-ed this)
@@ -37,22 +41,22 @@
                                                     ;;Ensure scroll position is the same as it was when we started
                                                     (.scrollTo (editor/->cm-ed this) (.-left prev) (.-top prev)))))))
 
-(behavior ::on-change
+(object/behavior* ::on-change
                   :debounce 750
                   :type :user
                   :desc "JSHint: Run JSHint on change"
                   :triggers #{:change}
                   :reaction (fn [this]
-                              (errors this (editor/->val this) (::jshint-options @this))))
+                              (errors this jshint-path (editor/->val this) (::jshint-options @this))))
 
-(behavior ::on-save
+(object/behavior* ::on-save
                   :triggers #{:save}
                   :type :user
                   :desc "JSHint: Run JSHint on save"
                   :reaction (fn [this]
-                              (errors this (editor/->val this) (::jshint-options @this))))
+                              (errors this jshint-path (editor/->val this) (::jshint-options @this))))
 
-(behavior ::jshint-options
+(object/behavior* ::jshint-options
                   :triggers #{:object.instant}
                   :type :user
                   :desc "JSHint: Set JSHint options"
@@ -66,5 +70,5 @@
               :desc "JSHint: Run jshint on current editor"
               :exec (fn [this]
                       (when-let [ed (pool/last-active)]
-                        (errors ed (editor/->val ed) (::jshint-options @ed))))})
+                        (errors ed jshint-path (editor/->val ed) (::jshint-options @ed))))})
 
