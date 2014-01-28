@@ -10,9 +10,11 @@
 
 (def jshint-path (files/join plugins/*plugin-dir* "node_modules/jshint"))
 
-(def errors (background (fn [obj-id jshint-path code opts]
+(def errors (background (fn [obj-id jshint-path code opts globals]
                           (let [jshint (.-JSHINT (js/require jshint-path))]
-                            (jshint code (when opts (clj->js opts)))
+                            (jshint code
+                                    (when opts (clj->js opts))
+                                    (when globals (clj->js (zipmap globals (repeat true)))))
                             (->> (js->clj (.-errors jshint) :keywordize-keys true)
                                  (raise obj-id :hinted))))))
 
@@ -47,14 +49,14 @@
                   :desc "JSHint: Run JSHint on change"
                   :triggers #{:change}
                   :reaction (fn [this]
-                              (errors this jshint-path (editor/->val this) (::jshint-options @this))))
+                              (errors this jshint-path (editor/->val this) (::jshint-options @this) (::jshint-globals @this))))
 
 (object/behavior* ::on-save
                   :triggers #{:save}
                   :type :user
                   :desc "JSHint: Run JSHint on save"
                   :reaction (fn [this]
-                              (errors this jshint-path (editor/->val this) (::jshint-options @this))))
+                              (errors this jshint-path (editor/->val this) (::jshint-options @this) (::jshint-globals @this))))
 
 (object/behavior* ::jshint-options
                   :triggers #{:object.instant}
@@ -66,9 +68,24 @@
                   :reaction (fn [this opts]
                               (object/merge! this {::jshint-options opts})))
 
+(object/behavior* ::jshint-globals
+                  :triggers #{:object.instant}
+                  :type :user
+                  :desc "JSHint: Set JSHint global variables defined elsewhere"
+                  :params [{:label "globals"
+                            :example "#{:jQuery :Backbone}"
+                            :type :clj}]
+                  :reaction (fn [this globals]
+                              (object/merge! this {::jshint-globals globals})))
+
+
 (cmd/command {:command :jshint.run
               :desc "JSHint: Run jshint on current editor"
               :exec (fn [this]
                       (when-let [ed (pool/last-active)]
-                        (errors ed jshint-path (editor/->val ed) (::jshint-options @ed))))})
+                        (errors ed
+                                jshint-path
+                                (editor/->val ed)
+                                (::jshint-options @ed)
+                                (::jshint-globals @ed))))})
 
