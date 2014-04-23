@@ -5,6 +5,7 @@
             [lt.objs.command :as cmd]
             [lt.objs.editor :as editor]
             [lt.objs.editor.pool :as pool]
+            [lt.util.dom :as dom]
             [lt.objs.thread :as thread])
   (:require-macros [lt.macros :refer [defui background]]))
 
@@ -18,6 +19,26 @@
                             (->> (js->clj (.-errors jshint) :keywordize-keys true)
                                  (raise obj-id :hinted))))))
 
+
+(defui gutter-marker [hints]
+  [:div.jshint-gutter-marker
+   [:div.hint-gutter-dot
+    {:style "width: 8px; height: 10px; background: red;"}]
+   [:div.hints
+    {:style "display:none;width: 310px; background:var(bg); padding: 5px; left: 10px; top: -1px; position: absolute;"
+     :class "cm-variable"}
+    [:ul
+     (map (fn [h]
+            [:li
+             {:style "padding-bottom: 3px; display:block"}
+             (str "- " h)]) hints)]]]
+  :mouseover (fn [e]
+               (if-let [target (dom/next (.-target e))]
+                 (dom/set-css target {:display :block})))
+  :mouseout (fn [e]
+               (if-let [target (dom/next (.-target e))]
+                 (dom/set-css target {:display :none}))))
+
 (defui mark [errors spacing]
   [:div.hintwrapper
    [:span.spacer spacing]
@@ -29,6 +50,20 @@
   (when text
     (-> (re-seq #"^\s+" text)
         (first))))
+
+(object/behavior* ::gutter-hints
+                  :triggers #{:hinted}
+                  :reaction (fn [this hints]
+                              (editor/operation (editor/->cm-ed this)
+                                                (fn []
+                                                  (let [hints-by-line (group-by :line (filter identity hints))
+                                                        markers (map (fn [[line hs]]
+                                                                   {:line (dec line) :mark (gutter-marker (map #(:reason %) hs))}) hints-by-line)]
+
+                                                    (editor/add-gutter this "jshint-gutter" 8)
+                                                    (.clearGutter (editor/->cm-ed this) "jshint-gutter")
+                                                    (doall (map (fn [marker]
+                                                                  (.setGutterMarker (editor/->cm-ed this) (:line marker) "jshint-gutter" (:mark marker))) markers)))))))
 
 (object/behavior* ::inline-hints
                   :triggers #{:hinted}
