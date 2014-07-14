@@ -22,15 +22,11 @@
 
 (defui gutter-marker [hints]
   [:div.jshint-gutter-marker
-   [:div.hint-gutter-dot
-    {:style "width: 8px; height: 10px; background: red;"}]
-   [:div.hints
-    {:style "display:none;width: 310px; background:var(bg); padding: 5px; left: 10px; top: -1px; position: absolute;"
-     :class "cm-variable"}
+   [:div.hint-gutter-dot]
+   [:div.hints.cm-variable
     [:ul
      (map (fn [h]
             [:li
-             {:style "padding-bottom: 3px; display:block"}
              (str "- " h)]) hints)]]]
   :mouseover (fn [e]
                (if-let [target (dom/next (.-target e))]

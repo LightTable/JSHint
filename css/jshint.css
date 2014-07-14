@@ -1,0 +1,21 @@
+.jshint-gutter-marker .hint-gutter-dot {
+  width: 8px;
+  height: 10px;
+  background: red;
+}
+
+.jshint-gutter-marker .hints {
+  display: none;
+  width: 310px;
+  background:var(bg);
+  padding: 5px;
+  left: 10px;
+  top: -1px;
+  position: absolute;
+}
+
+.jshint-gutter-marker .hints li {
+  padding-bottom: 3px;
+  display: block;
+}
+
