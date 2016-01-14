@@ -1,6 +1,5 @@
 (ns lt.plugins.jshint
   (:require [lt.object :as object]
-            [lt.objs.files :as files]
             [lt.objs.plugins :as plugins]
             [lt.objs.command :as cmd]
             [lt.objs.editor :as editor]
@@ -9,7 +8,7 @@
             [lt.objs.thread :as thread])
   (:require-macros [lt.macros :refer [defui background]]))
 
-(def jshint-path (files/join plugins/*plugin-dir* "node_modules/jshint"))
+(def jshint-path (plugins/local-module "jshint" "jshint"))
 
 (def errors (background (fn [obj-id jshint-path code opts globals]
                           (let [jshint (.-JSHINT (js/require jshint-path))]
