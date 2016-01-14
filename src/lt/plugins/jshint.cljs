@@ -8,7 +8,7 @@
             [lt.objs.thread :as thread])
   (:require-macros [lt.macros :refer [defui background]]))
 
-(def jshint-path (plugins/local-module "jshint" "jshint"))
+(def jshint-path (plugins/local-module "JSHint" "jshint"))
 
 (def errors (background (fn [obj-id jshint-path code opts globals]
                           (let [jshint (.-JSHINT (js/require jshint-path))]
