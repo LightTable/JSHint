@@ -103,7 +103,7 @@
           :type :user
           :desc "JSHint: Set JSHint global variables defined elsewhere"
           :params [{:label "globals"
-                    :example "#{:jQuery :Backbone}"
+                    :example "[:jQuery :Backbone]"
                     :type :clj}]
           :reaction (fn [this globals]
                       (object/merge! this {::jshint-globals globals})))
